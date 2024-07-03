@@ -1,0 +1,38 @@
+name: Deploy to Production
+run-name: Deployment by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  prod-deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install SSH client
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
+
+      - name: SSH Deploy to Staging
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_PROD_HOST }}
+          username: ${{ secrets.SERVER_PROD_USERNAME }}
+          password: ${{ secrets.SERVER_PROD_PASSWORD }}
+          skip-known-hosts: true
+          script: |
+              cd /var/www/dip-customer-support-frontend
+              git config --global --add safe.directory /var/www/dip-customer-support-frontend
+              ./deploy.sh
+              
+      - name:  Deployment completed
+        run: echo "Deployment completed from ${{ github.ref }} branch"
